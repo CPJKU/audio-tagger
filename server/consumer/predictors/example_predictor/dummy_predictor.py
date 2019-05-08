@@ -11,6 +11,7 @@ from threading import Thread, Event
 
 from server.consumer.predictors.predictor_contract import PredictorContract
 
+
 class PredictionThread(Thread):
     """
     Thread for periodically computing new class predictions
@@ -70,6 +71,7 @@ class PredictionThread(Thread):
         """
         self._stopevent.set()
         Thread.join(self, timeout)
+
 
 class DummyPredictor(PredictorContract):
     """

@@ -61,10 +61,10 @@ class MicrophoneThread(Thread):
         """
         self.p = pyaudio.PyAudio()
         self.stream = self.p.open(format=pyaudio.paInt16,
-                             channels=N_CHANNELS,
-                             rate=SAMPLE_RATE,
-                             input=True,
-                             frames_per_buffer=CHUNK_SIZE)
+                                  channels=N_CHANNELS,
+                                  rate=SAMPLE_RATE,
+                                  input=True,
+                                  frames_per_buffer=CHUNK_SIZE)
         self.manager = manager
         self._stopevent = Event()
         Thread.__init__(self, name=name)
@@ -74,7 +74,6 @@ class MicrophoneThread(Thread):
         puts them into the shared memory. Finally, the global time variable
         ``tGroundTruth`` is incremented by 1.
         """
-
 
         while not self._stopevent.isSet():
             chunk = self.stream.read(CHUNK_SIZE)
@@ -360,7 +359,7 @@ class AudioTaggerManager:
         self.visProvider.start()
         self.predProvider.start()
 
-    ############ Refresh function #############
+    # Refresh function
     # This function is called when the frontend
     # changes audio mode, file or predictor
     def refreshAudioTagger(self, settings):

@@ -5,8 +5,8 @@ by the module ``dcase_predictor_provider``
 import torch.nn as nn
 import torch.nn.functional as F
 
-class Net(nn.Module):
 
+class Net(nn.Module):
 
     def __init__(self):
         super(Net, self).__init__()
@@ -90,65 +90,45 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = F.relu(self.conv1_bn(self.conv1(x)))
-        #print(x.size())
         x = F.relu(self.conv2_bn(self.conv2(x)))
-        #print(x.size())
         x = F.max_pool2d(x, (2, 2))
-        #print(x.size())
         x = self.do1(x)
 
         x = F.relu(self.conv3_bn(self.conv3(x)))
-        #print(x.size())
         x = F.relu(self.conv4_bn(self.conv4(x)))
-        #print(x.size())
         x = F.max_pool2d(x, (2, 2))
-        #print(x.size())
         x = self.do2(x)
 
         x = F.relu(self.conv5_bn(self.conv5(x)))
-        #print(x.size())
         x = self.do3(x)
         x = F.relu(self.conv6_bn(self.conv6(x)))
-        #print(x.size())
         x = self.do4(x)
         x = F.relu(self.conv7_bn(self.conv7(x)))
-        #print(x.size())
         x = self.do5(x)
         x = F.relu(self.conv8_bn(self.conv8(x)))
-        #print(x.size())
         x = F.max_pool2d(x, (2, 2))
-        #print(x.size())
         x = self.do6(x)
 
         x = F.relu(self.conv9_bn(self.conv9(x)))
-        #print(x.size())
         x = F.relu(self.conv10_bn(self.conv10(x)))
-        #print(x.size())
         x = F.max_pool2d(x, (1, 2))
-        #print(x.size())
         x = self.do7(x)
 
         x = F.relu(self.conv11_bn(self.conv11(x)))
-        #print(x.size())
         x = F.relu(self.conv12_bn(self.conv12(x)))
-        #print(x.size())
         x = F.max_pool2d(x, (1, 2))
-        #print(x.size())
         x = self.do8(x)
 
         x = F.relu(self.conv13_bn(self.conv13(x)))
-        #print(x.size())
         x = self.do9(x)
         x = F.relu(self.conv14_bn(self.conv14(x)))
-        #print(x.size())
         x = self.do10(x)
 
         x = self.conv15_bn(self.conv15(x))
-        #print(x.size())
         size_to_pool = x.size()
         x = F.avg_pool2d(x, (size_to_pool[2],size_to_pool[3]))
         x = x.view(-1, 41)
-        #print(x.size())
+
         return x
 
     def initialize_weights(self, module):

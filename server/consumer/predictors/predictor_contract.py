@@ -3,6 +3,7 @@ all consumers which act as a predictor.
 
 """
 
+
 class PredictorContract:
     """ Contract class for all predictor consumers
 
@@ -55,4 +56,3 @@ class PredictorContract:
 
         """
         raise NotImplementedError
-

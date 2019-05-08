@@ -15,11 +15,8 @@ dependencies:
   - kivy=1.10.1
   - pytorch=1.0.1
   - torchvision=0.1.8
-  
-
   - pip:
     - madmom==0.16.1
     - matplotlib==3.0.3
     - opencv_python==4.1.0.25
-
-
+    - Sphinx

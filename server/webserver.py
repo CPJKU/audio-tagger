@@ -28,7 +28,7 @@ from server.audio_tagger_manager import AudioTaggerManager
 from server.config.load_config import loadPredictors, loadAudiofiles
 from server.config.config import START_PREDICTOR
 
-### load configs ###
+# load configs
 predictorList = loadPredictors()
 audiofileList = loadAudiofiles()
 
@@ -40,8 +40,9 @@ predictionProvider = predictionProviderClass()
 
 model = AudioTaggerManager(visualisationProvider, predictionProvider, predictorList, audiofileList)
 
-###### audio tagger REST API functions ######
+# audio tagger REST API functions
 app = Flask(__name__)
+
 
 @app.route('/live_visual', methods=['GET'])
 def live_visual():
@@ -67,6 +68,7 @@ def live_visual():
     return Response(content,
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+
 @app.route('/live_visual_browser', methods=['GET'])
 def live_visual_browser():
     """Http GET interface method to request most current audio visualisation
@@ -89,9 +91,10 @@ def live_visual_browser():
     content = model.getVisualisation()
     content = convertSpecToJPG(content)
     content = (b'--frame\r\n'
-                b'Content-Type: image/jpeg\r\n\r\n' + content + b'\r\n\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + content + b'\r\n\r\n')
     return Response(content,
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 @app.route('/live_pred', methods=['GET'])
 def live_pred():
@@ -121,6 +124,7 @@ def live_pred():
     )
     return response
 
+
 @app.route('/pred_list', methods=['GET'])
 def pred_list():
     """Http GET interface method to receive a list of available predictors.
@@ -147,13 +151,18 @@ def pred_list():
         {"id": 1, "displayname": "SportsPredictor", "classes": "3", "description": "sample description for detecting sports"}, ...]``
 
     """
-    content = [ {'id' : elem['id'], 'displayname': elem['displayname'], 'classes': elem['classes'], 'description': elem['description']} for elem in model.getPredList()]
+    content = [{'id': elem['id'],
+                'displayname': elem['displayname'],
+                'classes': elem['classes'],
+                'description': elem['description']} for elem in model.getPredList()]
+
     response = app.response_class(
         response=json.dumps(content),
         status=200,
         mimetype='application/json'
     )
     return response
+
 
 @app.route('/audiofile_list', methods=['GET'])
 def audiofile_list():
@@ -176,13 +185,14 @@ def audiofile_list():
         ``[{"id": 0, "displayname": "Trumpets"}, {"id": 1, "displayname": "Song1"}, {"id": 2, "displayname": "Song2"}, ...]``
 
     """
-    content = [{'id' : elem['id'],'displayname': elem['displayname']} for elem in model.getAudiofileList()]
+    content = [{'id': elem['id'], 'displayname': elem['displayname']} for elem in model.getAudiofileList()]
     response = app.response_class(
         response=json.dumps(content),
         status=200,
         mimetype='application/json'
     )
     return response
+
 
 @app.route('/settings', methods=['POST'])
 def send_new_settings():
@@ -211,8 +221,8 @@ def send_new_settings():
     model.refreshAudioTagger(content)
     return 'OK'
 
-###### Helper functions ######
 
+# Helper functions
 def convertSpecToJPG(spec):
     spec = spec / 3.0
     resz_spec = 3
@@ -224,7 +234,9 @@ def convertSpecToJPG(spec):
         spec_bgr = np.pad(spec_bgr, ((0, 0), (p, p), (0, 0)), mode="constant")
     spec_bgr = cv2.flip(spec_bgr, 0)
     _, curImage = cv2.imencode('.jpg', spec_bgr)
+
     return curImage.tobytes()
+
 
 # start webserver
 if __name__ == '__main__':

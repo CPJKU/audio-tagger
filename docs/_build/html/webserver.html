@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Webserver &#8212; Audio-Tagger  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Consumer" href="consumer.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="webserver">
+<h1>Webserver<a class="headerlink" href="#webserver" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-server.webserver"><span id="id1"></span></span><p>This is the python script for starting up the backend providing the necessary
+REST API interface methods to access the audio input visualisations and predictions
+periodically computed by the backend.</p>
+<p>At first, available audio files and predictors are loaded and the backend is
+initialized. The starting visualisation component is still fixed in this version.
+The starting predictor can be configured in the config.py module by setting the
+id of the predictor listed in predictors.csv. After initialization, the module
+opens an application server providing various REST interface methods. The host
+is fixed at <a class="reference external" href="http://127.0.0.1:5000">http://127.0.0.1:5000</a>.
+Possible GET requests are audio input visualisation (e.g. spectrogram) and the class predictions
+of a certain model based on the current audio input. Beyond reading data from the
+web server, one can also send the backend that it should switch to another
+predictor or should use microphone input or audio file input.</p>
+<dl class="function">
+<dt id="server.webserver.audiofile_list">
+<code class="descclassname">server.webserver.</code><code class="descname">audiofile_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#server.webserver.audiofile_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Http GET interface method to receive a list of available audio files.
+(URI: /audiofile_list)</p>
+<p>This method returns a list of audio files which can be selected
+and subsequently processed by the backend system. Each audio file
+comes with it’s ID and a displayname.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The ID is important since it is used to identify the audio file
+once a user sends a new setting to the server with send_new_settings().</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>Response</strong> – a json object with the available audio files in the following form:
+<code class="docutils literal notranslate"><span class="pre">[{&quot;id&quot;:</span> <span class="pre">0,</span> <span class="pre">&quot;displayname&quot;:</span> <span class="pre">&quot;Trumpets&quot;},</span> <span class="pre">{&quot;id&quot;:</span> <span class="pre">1,</span> <span class="pre">&quot;displayname&quot;:</span> <span class="pre">&quot;Song1&quot;},</span> <span class="pre">{&quot;id&quot;:</span> <span class="pre">2,</span> <span class="pre">&quot;displayname&quot;:</span> <span class="pre">&quot;Song2&quot;},</span> <span class="pre">...]</span></code></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>json</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="server.webserver.live_pred">
+<code class="descclassname">server.webserver.</code><code class="descname">live_pred</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#server.webserver.live_pred" title="Permalink to this definition">¶</a></dt>
+<dd><p>Http GET interface method to request most current class predictions.
+(URI: /live_pred)</p>
+<p>Once the backend has computed new predictions based on current audio input
+they can be accessed via this REST interface method.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In general, the method would return the same predictions until
+a new one has been computed.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>Response</strong> – a json object with the class predictions in the following form:
+<code class="docutils literal notranslate"><span class="pre">[[&quot;Acoustic_guitar&quot;,</span> <span class="pre">0.0006955251446925104,</span> <span class="pre">0],</span> <span class="pre">[&quot;Applause&quot;,</span> <span class="pre">0.0032770668622106314,</span> <span class="pre">1],</span> <span class="pre">...]</span></code></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>json</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="server.webserver.live_visual">
+<code class="descclassname">server.webserver.</code><code class="descname">live_visual</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#server.webserver.live_visual" title="Permalink to this definition">¶</a></dt>
+<dd><p>Http GET interface method to request most current audio visualisation
+(URI: /live_visual).</p>
+<p>The backend periodically computes new visual representations of the
+currently incoming audio chunks. This method provides access to
+the most recent visual representation (e.g. spectrogram).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In general, the method would return the same representation until
+a new one has been computed.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a response object with the visualisation in jpeg-format as content.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Response</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="server.webserver.live_visual_browser">
+<code class="descclassname">server.webserver.</code><code class="descname">live_visual_browser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#server.webserver.live_visual_browser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Http GET interface method to request most current audio visualisation
+(browser ready) (URI: /live_visual_browser).</p>
+<p>This method is equivalent to live_visual() except that response content
+is adapted to be visualized in the browser.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In general, the method would return the same representation until
+a new one has been computed.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a response object with the visualisation in jpeg-format as content
+which can be displayed in browser.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Response</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="server.webserver.pred_list">
+<code class="descclassname">server.webserver.</code><code class="descname">pred_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#server.webserver.pred_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Http GET interface method to receive a list of available predictors.
+(URI: /pred_list)</p>
+<p>This method returns all predictors available in the backend system.
+Each predictor comes with the following properties:</p>
+<ul class="simple">
+<li><p>ID</p></li>
+<li><p>Displayname</p></li>
+<li><p>Number of classes</p></li>
+<li><p>Description</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The ID is important since it is used to identify the desired predictor
+once a user sends a new setting to the server with send_new_settings().</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>Response</strong> – a json object with the available predictors in the following form:
+<code class="docutils literal notranslate"><span class="pre">[{&quot;id&quot;:</span> <span class="pre">0,</span> <span class="pre">&quot;displayname&quot;:</span> <span class="pre">&quot;DCASEPredictor&quot;,</span> <span class="pre">&quot;classes&quot;:</span> <span class="pre">&quot;41&quot;,</span> <span class="pre">&quot;description&quot;:</span> <span class="pre">&quot;sample</span> <span class="pre">description</span> <span class="pre">for</span> <span class="pre">dcase&quot;},</span>
+<span class="pre">{&quot;id&quot;:</span> <span class="pre">1,</span> <span class="pre">&quot;displayname&quot;:</span> <span class="pre">&quot;SportsPredictor&quot;,</span> <span class="pre">&quot;classes&quot;:</span> <span class="pre">&quot;3&quot;,</span> <span class="pre">&quot;description&quot;:</span> <span class="pre">&quot;sample</span> <span class="pre">description</span> <span class="pre">for</span> <span class="pre">detecting</span> <span class="pre">sports&quot;},</span> <span class="pre">...]</span></code></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>json</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="server.webserver.send_new_settings">
+<code class="descclassname">server.webserver.</code><code class="descname">send_new_settings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#server.webserver.send_new_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Http POST interface method for sending new configuration settings
+to backend system.
+(URI: /settings)</p>
+<p>This methods allows to change the currently active predictor and the
+audio input source on the fly without stopping the backend. Once a user
+selected audio file input, a list of audio files is available to select
+a certain input source. The body of the POST message should look as follows:
+<code class="docutils literal notranslate"><span class="pre">{'isLive':</span> <span class="pre">1,</span> <span class="pre">'file':</span> <span class="pre">0,</span> <span class="pre">'predictor':</span> <span class="pre">1}</span></code></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Use the same IDs for audio files and predictors as the come from
+pred_list() and audiofile_list() so the backend system can match
+the selection.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Http Status Code</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Audio-Tagger</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="backend.html">Backend</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="backend.html">Backend</a><ul>
+      <li>Previous: <a href="consumer.html" title="previous chapter">Consumer</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Alexander Moser, Florian Henkel, Stefan Balke.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/webserver.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

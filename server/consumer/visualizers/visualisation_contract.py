@@ -3,6 +3,7 @@ all consumers which act as a predictor.
 
 """
 
+
 class VisualisationContract:
     """ Contract class for all predictor consumers
 

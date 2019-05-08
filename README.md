@@ -10,11 +10,31 @@ This project provides components for predicting audio input and showing its corr
 &nbsp;&nbsp;&nbsp;&nbsp; directory with a sample python GUI  
 
 ## Installation
+
+### Backend
 Use Python 3 and Anaconda in order to get the code running for guarantee!  
 Version used during development: ```3.6.7```
 
-1. ```python setup.py develop```
-2. Execute conda environment.yaml with ```conda env create -f environment.yml```
+1. Create environment ```conda env create -f environment.yml```
+1. Install package ```python setup.py develop```
+
+### GUI
+We provide a simple GUI written in Kivy. To fullfil the requirements on Ubuntu, please install these packages.
+
+```
+sudo apt-get install -y \
+    build-essential \
+    git \
+    libsdl2-dev \
+    libsdl2-image-dev \
+    libsdl2-mixer-dev \
+    libsdl2-ttf-dev \
+    libportmidi-dev \
+    libswscale-dev \
+    libavformat-dev \
+    libavcodec-dev \
+    zlib1g-dev
+```
 
 ## Architectural backend design
 The figure below should give a basic understanding of the information flow and the components involved in 
@@ -36,8 +56,6 @@ python server/webserver.py
 
 ### REST interface
 In order to guarantee independence of programming languages, all output can be accessed by calling URL endpoints. 
-
-
 
 #### Get current spectrogram
 |  |  |
@@ -87,6 +105,7 @@ Example response: ```[{"id": 0, "displayname": "Trumpets"}, {"id": 1, "displayna
 | Return | the available prediction models as a list of json objects | 
 
 Example response: ```[{"id": 0, "displayname": "DCASEPredictor", "classes": "41", "description": "sample description for dcase"}, {"id": 1, "displayname": "SportsPredictor", "classes": "3", "description": "sample description for detecting sports"}, ...]```  
+
 #### Change audio input source and predictor  
 The audio tagger backend implements another endpoint to change the audio source as well as the currently active prediction model on the fly.  
 

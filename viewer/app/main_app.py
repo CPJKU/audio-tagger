@@ -17,15 +17,15 @@ from kivy.core.window import Window
 from kivy.properties import ListProperty, StringProperty
 from viewer.utils.utils import getScreenResolution
 
-class AudioTaggerWindow(FloatLayout):
-    prob_list = ListProperty([100, 100, 100, 100, 100]) # length of class probability bars
-    class_list = ListProperty(['', '', '', '', '']) # labels of class probability bars
-    class_bar_height = ListProperty([0, 0, 0, 0, 0]) # simulate visibility of class probability bars
-    pred_list = ListProperty([])    # selectable list of predictors
-    source_list = ListProperty([])  # selectable list of audio files
-    sourceProperty = StringProperty() # label showing the currently active audio input
-    predictorProperty = StringProperty() # label showing the currently active predictor
 
+class AudioTaggerWindow(FloatLayout):
+    prob_list = ListProperty([100, 100, 100, 100, 100])  # length of class probability bars
+    class_list = ListProperty(['', '', '', '', ''])  # labels of class probability bars
+    class_bar_height = ListProperty([0, 0, 0, 0, 0])  # simulate visibility of class probability bars
+    pred_list = ListProperty([])  # selectable list of predictors
+    source_list = ListProperty([])  # selectable list of audio files
+    sourceProperty = StringProperty()  # label showing the currently active audio input
+    predictorProperty = StringProperty()  # label showing the currently active predictor
 
     def start_Button_pressed(self, label):
         self.start_button.disabled = True
@@ -55,6 +55,7 @@ class AudioTaggerWindow(FloatLayout):
         self.prob_list[index] = width
         self.class_bar_height[index] = height
 
+
 class MainApp(App):
 
     kv_directory = 'viewer/kv'
@@ -79,7 +80,7 @@ class MainApp(App):
 
         # register trigger functions to update new settings (predictors, input source)
         self.window.input_switch.bind(active=self.window.liveOrFileSettingHasChanged)
-        self.window.predView.adapter.bind(on_selection_change=self.window.predSettingHasChanged) # doesn't work in .kv file
+        self.window.predView.adapter.bind(on_selection_change=self.window.predSettingHasChanged)  # doesn't work in .kv file
         self.window.sourceView.adapter.bind(on_selection_change=self.window.sourceSettingHasChanged)  # doesn't work in .kv file
 
         return self.window
@@ -150,6 +151,6 @@ class MainApp(App):
         self.setSummaryLabels()
         fileId = [elem['id'] for elem in self.window.source_list if elem['displayname'] == self.file][0]
         predictorId = [elem['id'] for elem in self.window.pred_list if elem['displayname'] == self.predictor][0]
-        settingsDict = {'isLive' : 1 if self.isLive else 0 , 'file' : fileId, 'predictor' : predictorId}
+        settingsDict = {'isLive': 1 if self.isLive else 0, 'file': fileId, 'predictor': predictorId}
         # send new settings to backend
         res = requests.post('http://localhost:5000/settings', json=settingsDict)
