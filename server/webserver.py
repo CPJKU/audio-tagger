@@ -217,7 +217,7 @@ def convertSpecToJPG(spec):
     spec = spec / 3.0
     resz_spec = 3
     spec = cv2.resize(spec, (spec.shape[1] * resz_spec, spec.shape[0] * resz_spec))
-    spec = plt.cm.viridis(spec)[:, :, 0:3]
+    spec = plt.cm.magma(spec)[:, :, 0:3]
     spec_bgr = (spec * 255).astype(np.uint8)
     if spec_bgr.shape[1] < 512:
         p = (512 - spec_bgr.shape[1]) // 2
