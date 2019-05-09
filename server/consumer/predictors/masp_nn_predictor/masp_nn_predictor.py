@@ -2,7 +2,7 @@
 import os
 import numpy as np
 
-from server.consumer.predictors.masp_predictor.masp_model import load_masp_model
+from server.consumer.predictors.masp_nn_predictor.masp_nn_model import load_masp_nn_model
 from server.consumer.predictors.predictor_contract import PredictorContract
 from server.config.config import PROJECT_ROOT, BUFFER_SIZE, SAMPLE_RATE
 from collections import deque
@@ -11,10 +11,11 @@ from server.consumer.predictors.masp_predictor.features import get_spec, low_lev
 from server.consumer.predictors.prediction_thread import PredictionThread
 
 
-class MASPPredictor(PredictorContract):
+class MASPNNPredictor(PredictorContract):
     """
-    Implementation of a PredictorContract. This class uses three XGBoosted decision tree models
-    to simultaneously  predict whether applause, music or speech is present in the current audio.
+    Implementation of a PredictorContract. This class
+    uses a simple neural network to simultaneously predict whether applause,
+    music or speech is present in the current audio.
 
     Attributes
     ----------
@@ -34,11 +35,9 @@ class MASPPredictor(PredictorContract):
     def __init__(self):
 
         self.classes = ["Applause", "Music", 'Speech']
-
-        predictor_path = os.path.join(PROJECT_ROOT, 'server/consumer/predictors/masp_predictor/')
-        self.model = load_masp_model(os.path.join(predictor_path, 'applause_detector'),
-                                     os.path.join(predictor_path, 'music_detector'),
-                                     os.path.join(predictor_path, 'speech_detector'))
+        predictor_path = os.path.join(PROJECT_ROOT, 'server/consumer/predictors/masp_nn_predictor/')
+        self.model = load_masp_nn_model(os.path.join(predictor_path, 'masp_nn_predictor.pt'),
+                                        os.path.join(predictor_path, 'masp_nn_stats.npz'))
 
         self.predThread = None
         # Hz to cent conversion matrix used for calculating the CFT feature
