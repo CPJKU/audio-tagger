@@ -8,15 +8,27 @@ import os
 from scipy.io import wavfile
 from subprocess import check_call
 
+
 if __name__ == "__main__":
+    PATH_FILES = os.path.join('server', 'selection')
 
-    for file in glob.glob(os.path.join(PROJECT_ROOT, 'server/files/*.wav')):
+    for file in glob.glob(os.path.join(PROJECT_ROOT, PATH_FILES, '*.wav')):
+        print(file)
+        path_tmpfile = os.path.join(PROJECT_ROOT, PATH_FILES, 'tmp.wav')
 
-        org_sr, wf = wavfile.read(file)
+        # get samplerate
+        org_sr, _ = wavfile.read(file)
 
-        if org_sr != SAMPLE_RATE:
-            print('Resample {} from {} Hz to {} Hz'.format(file, org_sr, SAMPLE_RATE))
+        # normalize and clip silence
+        call_sox = ['sox', file,
+                    '-r', str(SAMPLE_RATE), path_tmpfile,
+                    'norm', '-0.1',
+                    'silence', '1', '0.025', '0.15%',
+                    'norm', '-0.1',
+                    'reverse',
+                    'silence', '1', '0.025', '0.15%',
+                    'reverse']
+        check_call(call_sox)
 
-            check_call(["ffmpeg", "-y", "-i", file, "-ar", str(SAMPLE_RATE), os.path.join(PROJECT_ROOT, 'server/files/tmp.wav')])
-            os.remove(file)
-            os.rename(os.path.join(PROJECT_ROOT, 'server/files/tmp.wav'), file)
+        os.remove(file)
+        os.rename(os.path.join(PROJECT_ROOT, PATH_FILES, 'tmp.wav'), file)

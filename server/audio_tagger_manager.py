@@ -140,9 +140,9 @@ class AudiofileThread(Thread):
         self.p = pyaudio.PyAudio()
         self.wf = wave.open(filePath, 'rb')
         self.stream = self.p.open(format=pyaudio.paInt16,
-                channels=N_CHANNELS,
-                rate=SAMPLE_RATE,
-                output=True)
+                                  channels=N_CHANNELS,
+                                  rate=SAMPLE_RATE,
+                                  output=True)
         self.manager = manager
         self._stopevent = Event()
         Thread.__init__(self, name=name)
