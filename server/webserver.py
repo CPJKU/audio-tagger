@@ -25,12 +25,12 @@ from flask import Flask, Response, request
 
 from server.consumer.visualizers.spectrogram.madmom_spectrogram_provider import MadmomSpectrogramProvider
 from server.audio_tagger_manager import AudioTaggerManager
-from server.config.load_config import loadPredictors, loadAudiofiles
+from server.config.load_config import loadPredictors, loadAudiofilesFolder
 from server.config.config import START_PREDICTOR
 
 # load configs
 predictorList = loadPredictors()
-audiofileList = loadAudiofiles()
+audiofileList = loadAudiofilesFolder('server/files')
 
 visualisationProvider = MadmomSpectrogramProvider()
 
