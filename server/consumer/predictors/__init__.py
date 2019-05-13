@@ -3,4 +3,6 @@
 """
 
 from . import example_predictor
-from . import dcase_predictor_provider
+from . import dcase_predictor
+from . import masp_predictor
+from . import masp_nn_predictor

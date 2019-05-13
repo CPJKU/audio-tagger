@@ -65,7 +65,7 @@ class VisualisationThread(Thread):
         """
         while not self._stopevent.isSet():
             if len(self.provider.manager.sharedMemory) > 0: # start consuming once the producer has started
-                spec = self.provider.computeSpectrogram()
+                spec = self.provider.compute_spectrogram()
                 self.provider.manager.onNewVisualisationCalculated(spec)
 
     def join(self, timeout=None):
@@ -152,7 +152,7 @@ class MadmomSpectrogramProvider(VisualisationContract):
         """
         self.visThread.join()
 
-    def computeSpectrogram(self):
+    def compute_spectrogram(self):
         """This methods first access the global time variable ``tGroundTruth``
         and reads audio chunk the time variable points to. Afterwards, the defined
         madmom pipeline is processed to get the spectrogram representation of the
