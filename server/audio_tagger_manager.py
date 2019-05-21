@@ -375,7 +375,11 @@ class AudioTaggerManager:
         """
 
         # stop producer and consumers
-        self.producerThread.join()
+
+        try:
+            self.producerThread.join()
+        except:
+            print("Join call on a non existing thread is ignored...")
 
         self.visProvider.stop()
         self.predProvider.stop()

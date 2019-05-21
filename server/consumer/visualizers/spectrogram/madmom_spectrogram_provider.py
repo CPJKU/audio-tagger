@@ -150,7 +150,10 @@ class MadmomSpectrogramProvider(VisualisationContract):
     def stop(self):
         """Stops all sub tasks
         """
-        self.visThread.join()
+        try:
+            self.visThread.join()
+        except:
+            print("Join call on a non existing thread is ignored...")
 
     def compute_spectrogram(self):
         """This methods first access the global time variable ``tGroundTruth``
@@ -182,3 +185,5 @@ class MadmomSpectrogramProvider(VisualisationContract):
             self.lastProceededGroundTruth = t
 
         return self.sliding_window.copy()
+
+
