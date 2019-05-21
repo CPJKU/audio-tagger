@@ -102,7 +102,10 @@ class DummyPredictor(PredictorContract):
     def stop(self):
         """Stops all sub tasks
         """
-        self.predThread.join()
+        try:
+            self.predThread.join()
+        except:
+            print("Join call on a non existing thread is ignored...")
 
     def predict(self):
         """dummy predictor

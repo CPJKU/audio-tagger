@@ -17,13 +17,15 @@ if __name__ == "__main__":
 
         # normalize and clip silence
         call_sox = ['sox', file,
+                    '-c', '1',
                     '-r', str(SAMPLE_RATE), path_tmpfile,
                     'norm', '-0.1',
                     'silence', '1', '0.025', '0.15%',
                     'norm', '-0.1',
                     'reverse',
                     'silence', '1', '0.025', '0.15%',
-                    'reverse']
+                    'reverse'
+                    ]
         check_call(call_sox)
 
         os.remove(file)

@@ -28,7 +28,7 @@ class MASPPredictor(PredictorContract):
     stop()
        stops all necessary sub tasks of this predictor.
     predict()
-       dummy prediction returning random class probabilities.
+       prediction returning class probabilities for applause, music and speech.
     """
 
     def __init__(self):
@@ -57,7 +57,10 @@ class MASPPredictor(PredictorContract):
     def stop(self):
         """Stops all sub tasks
         """
-        self.predThread.join()
+        try:
+            self.predThread.join()
+        except:
+            print("Join call on a non existing thread is ignored...")
 
     def predict(self):
 

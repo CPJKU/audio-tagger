@@ -65,4 +65,5 @@ def load_masp_nn_model(model_path, stats_path):
     model.to(device)
     model.eval()
     model.set_stats(**np.load(stats_path))
-    return  model
+
+    return model

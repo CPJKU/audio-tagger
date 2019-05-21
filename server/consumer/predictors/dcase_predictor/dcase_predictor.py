@@ -20,8 +20,6 @@ new predictions.
 
 """
 import os
-import torch
-import torch.nn as nn
 import numpy as np
 
 from threading import Thread, Event
@@ -33,7 +31,15 @@ from madmom.processors import SequentialProcessor
 
 from server.config.config import PROJECT_ROOT, BUFFER_SIZE
 from server.consumer.predictors.predictor_contract import PredictorContract
-from server.consumer.predictors.dcase_predictor_provider.baseline_net import Net
+from server.consumer.predictors.dcase_predictor.baseline_model import load_dcase_model
+
+
+DCASE_CLASSES = ["Acoustic_guitar", "Applause", "Bark", "Bass_drum", "Burping_or_eructation", "Bus", "Cello", "Chime",
+                 "Clarinet", "Computer_keyboard", "Cough", "Cowbell", "Double_bass", "Drawer_open_or_close",
+                 "Electric_piano", "Fart", "Finger_snapping", "Fireworks", "Flute", "Glockenspiel", "Gong",
+                 "Gunshot_or_gunfire", "Harmonica", "Hi-hat", "Keys_jangling", "Knock", "Laughter", "Meow",
+                 "Microwave_oven", "Oboe", "Saxophone", "Scissors", "Shatter", "Snare_drum", "Squeak", "Tambourine",
+                 "Tearing", "Telephone", "Trumpet", "Violin_or_fiddle", "Writing"]
 
 
 class SlidingWindowThread(Thread):
@@ -75,7 +81,7 @@ class SlidingWindowThread(Thread):
         """
         while not self._stopevent.isSet():
             if len(self.provider.manager.sharedMemory) > 0: # start consuming once the producer has started
-                self.provider.computeSpectrogram()
+                self.provider.compute_spectrogram()
 
     def join(self, timeout=None):
         """Stops the thread.
@@ -94,7 +100,7 @@ class SlidingWindowThread(Thread):
         Thread.join(self, timeout)
 
 
-class DcasePredictorProvider(PredictorContract):
+class DcasePredictor(PredictorContract):
     """
     Implementation of a PredictorContract. This class
     makes predictions where spectrograms are considered
@@ -139,25 +145,6 @@ class DcasePredictorProvider(PredictorContract):
     predict()
        CNN prediction based on current spectrogram input.
     """
-    # madmom pipeline for spectrogram calculation
-    sig_proc = SignalProcessor(num_channels=1, sample_rate=32000, norm=True)
-    fsig_proc = FramedSignalProcessor(frame_size=1024, hop_size=128, origin='future')
-    spec_proc = SpectrogramProcessor(frame_size=1024)
-    filt_proc = LogarithmicFilteredSpectrogramProcessor(filterbank=LogFilterbank, num_bands=26, fmin=20, fmax=14000)
-    processorPipeline = SequentialProcessor([sig_proc, fsig_proc, spec_proc, filt_proc])
-
-    classes = ["Acoustic_guitar", "Applause", "Bark", "Bass_drum", "Burping_or_eructation", "Bus", "Cello", "Chime",
-               "Clarinet", "Computer_keyboard", "Cough", "Cowbell", "Double_bass", "Drawer_open_or_close",
-               "Electric_piano",
-               "Fart", "Finger_snapping", "Fireworks", "Flute", "Glockenspiel", "Gong", "Gunshot_or_gunfire",
-               "Harmonica",
-               "Hi-hat", "Keys_jangling", "Knock", "Laughter", "Meow", "Microwave_oven", "Oboe", "Saxophone",
-               "Scissors",
-               "Shatter", "Snare_drum", "Squeak", "Tambourine", "Tearing", "Telephone", "Trumpet",
-               "Violin_or_fiddle",
-               "Writing"]
-
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     def __init__(self):
         """
@@ -171,17 +158,23 @@ class DcasePredictorProvider(PredictorContract):
            variable to keep track of the last processed audio chunk
         """
         # load model with its tuned weight parameters
-        self.prediction_model = Net()
-        self.prediction_model.load_state_dict(
-            torch.load(os.path.join(PROJECT_ROOT,
-                                    'server/consumer/predictors/dcase_predictor_provider/baseline_net.pt'),
-                       map_location=lambda storage, location: storage))
-        self.prediction_model.to(self.device)
-        self.prediction_model.eval()
+        self.model = load_dcase_model(os.path.join(PROJECT_ROOT,
+                                    'server/consumer/predictors/dcase_predictor/baseline_net.pt'))
 
         # sliding window as cache
         self.sliding_window = np.zeros((128, 256), dtype=np.float32)
         self.lastProceededGroundTruth = None
+
+        # madmom pipeline for spectrogram calculation
+        sig_proc = SignalProcessor(num_channels=1, sample_rate=32000, norm=True)
+        fsig_proc = FramedSignalProcessor(frame_size=1024, hop_size=128, origin='future')
+        spec_proc = SpectrogramProcessor(frame_size=1024)
+        filt_proc = LogarithmicFilteredSpectrogramProcessor(filterbank=LogFilterbank, num_bands=26, fmin=20, fmax=14000)
+
+        self.processor = SequentialProcessor([sig_proc, fsig_proc, spec_proc, filt_proc])
+
+        self.slidingWindowThread = None
+        self.predictionThread = None
 
     def start(self):
         """Start all sub tasks necessary for continuous prediction.
@@ -194,13 +187,14 @@ class DcasePredictorProvider(PredictorContract):
     def stop(self):
         """Stops all sub tasks
         """
+
         try:
             self.slidingWindowThread.join()
             self.predictionThread.join()
         except:
             print("Join call on a non existing thread is ignored...")
 
-    def computeSpectrogram(self):
+    def compute_spectrogram(self):
         """This methods first access the global time variable ``tGroundTruth``
         and reads audio chunk the time variable points to. Afterwards, the defined
         madmom pipeline is processed to get the spectrogram representation of the
@@ -212,7 +206,7 @@ class DcasePredictorProvider(PredictorContract):
         if t != self.lastProceededGroundTruth:
             frame = self.manager.sharedMemory[(t - 1) % BUFFER_SIZE]   # modulo avoids index under/overflow
             frame = np.fromstring(frame, np.int16)
-            spectrogram = self.processorPipeline.process(frame)
+            spectrogram = self.processor.process(frame)
 
             frame = spectrogram[0]
             if np.any(np.isnan(frame)):
@@ -240,10 +234,6 @@ class DcasePredictorProvider(PredictorContract):
         """
 
         input = self.sliding_window[np.newaxis, np.newaxis]
-        cuda_torch_input = torch.from_numpy(input).to(self.device)
-        model_output = self.prediction_model(cuda_torch_input)  # prediction by model
-        softmax = nn.Softmax(dim=1)
-        softmax_output = softmax(model_output)
-        predicts = softmax_output.cpu().detach().numpy().flatten()
-        probs = [[elem, predicts[index].item(), index] for index, elem in enumerate(self.classes)]
+        predictions = self.model.predict_proba(input)
+        probs = [[elem, predictions[index].item(), index] for index, elem in enumerate(DCASE_CLASSES)]
         return probs

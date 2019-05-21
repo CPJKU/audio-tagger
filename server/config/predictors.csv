@@ -1,4 +1,4 @@
 id;displayname;classes;description;predictorClassPath
-0;DCASEPredictor;41;sample description for dcase;dcase_predictor_provider.dcase_predictor_provider.DcasePredictorProvider
+0;DCASEPredictor;41;sample description for dcase;dcase_predictor.dcase_predictor.DcasePredictor
 1;MASPPredictor;3;Music Applause and Speech detector;masp_predictor.masp_predictor.MASPPredictor
 2;MASPNNPredictor;3;Music Applause and Speech detector with a neural network;masp_nn_predictor.masp_nn_predictor.MASPNNPredictor

@@ -14,7 +14,7 @@ class MASPModel:
 
         cfa, cft, llf = x
 
-        if len(cfa.shape) !=2:
+        if len(cfa.shape) != 2:
             cfa = np.expand_dims(cfa, 0)
 
         app_prob = self.applause_detector.predict_proba(llf)[:, 1]

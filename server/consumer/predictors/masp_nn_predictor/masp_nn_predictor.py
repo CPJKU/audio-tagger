@@ -29,7 +29,7 @@ class MASPNNPredictor(PredictorContract):
     stop()
        stops all necessary sub tasks of this predictor.
     predict()
-       dummy prediction returning random class probabilities.
+       prediction returning class probabilities for applause, music and speech.
     """
 
     def __init__(self):
@@ -40,6 +40,7 @@ class MASPNNPredictor(PredictorContract):
                                         os.path.join(predictor_path, 'masp_nn_stats.npz'))
 
         self.predThread = None
+
         # Hz to cent conversion matrix used for calculating the CFT feature
         self.CM_norm = get_cent_conversion_matrix(4096, SAMPLE_RATE)
         self.lastProceededGroundTruth = -1
@@ -56,7 +57,11 @@ class MASPNNPredictor(PredictorContract):
     def stop(self):
         """Stops all sub tasks
         """
-        self.predThread.join()
+
+        try:
+            self.predThread.join()
+        except:
+            print("Join call on a non existing thread is ignored...")
 
     def predict(self):
 
@@ -72,8 +77,8 @@ class MASPNNPredictor(PredictorContract):
                 sig.append(frame)
 
             sig = np.hstack(sig)
-
             spec = get_spec(sig)
+
             low_feature = low_level_features(sig=sig, spec=spec, sample_rate=SAMPLE_RATE)
             cft_feature = cft(spec=spec, CM_norm=self.CM_norm, sample_rate=SAMPLE_RATE)
             cfa_feature = cfa(spec=spec)
