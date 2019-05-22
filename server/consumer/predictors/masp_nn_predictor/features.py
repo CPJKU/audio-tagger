@@ -1,5 +1,6 @@
 import madmom
 import numpy as np
+from scipy import sparse
 from scipy.signal import find_peaks
 import librosa
 from numpy.lib.stride_tricks import as_strided
@@ -92,7 +93,7 @@ def get_cent_conversion_matrix(fft_length, sample_rate):
     CM_boosted = CM_masked ** 2
     CM_norm = CM_boosted / CM_boosted.sum(0)
 
-    return CM_norm
+    return sparse.csr_matrix(CM_norm)
 
 
 def cfa(sig=None, spec=None, binarization_threshold=0.1, nr_activation_peaks=5, nr_freq_bins=552, nnf_window_length=21,
@@ -204,7 +205,8 @@ def cft(sig=None, spec=None, CM_norm=None, noise_threshold=0.2, fft_length=4096,
         CM_norm = get_cent_conversion_matrix(fft_length, sample_rate)
 
     # convert magnitude spectrogram from Hz to cent
-    XC_cent = CM_norm.T @ spec.T
+    # XC_cent = CM_norm.T @ spec.T
+    XC_cent = sparse.csr_matrix.dot(spec, CM_norm).T
 
     # 3. Noise reduction
     min_ = np.min(XC_cent, axis=0)

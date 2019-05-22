@@ -30,8 +30,8 @@ class AudioTaggerWindow(FloatLayout):
     def start_Button_pressed(self, label):
         self.start_button.disabled = True
         # get current spectrogram and predictions periodically by polling
-        Clock.schedule_interval(App.get_running_app().getCurrentSpectrogram, 0.02)
-        Clock.schedule_interval(App.get_running_app().getCurrentPrediction, 0.02)
+        Clock.schedule_interval(App.get_running_app().getCurrentSpectrogram, 0.01)
+        Clock.schedule_interval(App.get_running_app().getCurrentPrediction, 0.01)
 
     def liveOrFileSettingHasChanged(self, instance, value):
         App.get_running_app().setIsLive(value)
@@ -127,6 +127,8 @@ class MainApp(App):
         image = np.fromstring(response.read(), np.uint8)
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
         image = cv2.flip(image, 0)
+
+        # image = cv2.resize(image, (image.shape[1]*3, image.shape[0]*3))
 
         # send new spectrogram to UI thread
         self.window.update_Spectrogram_Image(image)
