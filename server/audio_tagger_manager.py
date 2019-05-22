@@ -178,6 +178,12 @@ class AudiofileThread(Thread):
            a timeout value in seconds
 
        """
+        if self.stream.is_active():
+            self.stream.stop_stream()
+            self.stream.close()
+
+        self.p.terminate()
+
         self._stopevent.set()
         Thread.join(self, timeout)
 
@@ -397,8 +403,13 @@ class AudioTaggerManager:
         if isLive:
             self.producerThread = MicrophoneThread(self)
         else:
-            filePath = [elem['path'] for elem in self.getAudiofileList() if elem['id'] == file][0]
-            self.producerThread = AudiofileThread(self, filePath)
+            # TODO handle initial index error properly
+            if file != -1:
+                filePath = [elem['path'] for elem in self.getAudiofileList() if elem['id'] == file][0]
+                self.producerThread = AudiofileThread(self, filePath)
+            else:
+                self.producerThread = None
+
 
         # load selected prediction class via reflection, update references for the new predictor object
         predictorClassPath = [elem['predictorClassPath'] for elem in self.getPredList() if elem['id'] == predictor][0]
@@ -408,7 +419,8 @@ class AudioTaggerManager:
         self.predProvider.registerManager(self)
 
         # restart producer and consumers
-        self.producerThread.start()
+        if self.producerThread is not None:
+            self.producerThread.start()
 
         self.visProvider.start()
         self.predProvider.start()
