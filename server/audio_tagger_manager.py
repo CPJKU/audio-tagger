@@ -178,11 +178,6 @@ class AudiofileThread(Thread):
            a timeout value in seconds
 
        """
-        if self.stream.is_active():
-            self.stream.stop_stream()
-            self.stream.close()
-
-        self.p.terminate()
 
         self._stopevent.set()
         Thread.join(self, timeout)
