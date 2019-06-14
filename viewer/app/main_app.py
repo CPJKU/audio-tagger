@@ -18,6 +18,10 @@ from kivy.properties import ListProperty, StringProperty
 from viewer.utils.utils import getScreenResolution
 
 
+SERVER_ADR = 'http://127.0.0.1:80'
+UPDATE_RATE = 0.01
+
+
 class AudioTaggerWindow(FloatLayout):
     prob_list = ListProperty([100, 100, 100, 100, 100])  # length of class probability bars
     class_list = ListProperty(['', '', '', '', ''])  # labels of class probability bars
@@ -30,8 +34,8 @@ class AudioTaggerWindow(FloatLayout):
     def start_Button_pressed(self, label):
         self.start_button.disabled = True
         # get current spectrogram and predictions periodically by polling
-        Clock.schedule_interval(App.get_running_app().getCurrentSpectrogram, 0.02)
-        Clock.schedule_interval(App.get_running_app().getCurrentPrediction, 0.02)
+        Clock.schedule_interval(App.get_running_app().getCurrentSpectrogram, UPDATE_RATE)
+        Clock.schedule_interval(App.get_running_app().getCurrentPrediction, UPDATE_RATE)
 
     def liveOrFileSettingHasChanged(self, instance, value):
         App.get_running_app().setIsLive(value)
@@ -93,11 +97,11 @@ class MainApp(App):
         self.window.predictorProperty = self.predictor
 
     def loadPredictors(self):
-        response = urlopen("http://127.0.0.1:5000/pred_list")
+        response = urlopen(SERVER_ADR + "/pred_list")
         return json.loads(response.read())
 
     def loadSources(self):
-        response = urlopen("http://127.0.0.1:5000/audiofile_list")
+        response = urlopen(SERVER_ADR + "/audiofile_list")
         return json.loads(response.read())
 
     def setIsLive(self, value):
@@ -122,7 +126,7 @@ class MainApp(App):
         self.notifyBackendAboutSettingsChanged()
 
     def getCurrentSpectrogram(self, dt):
-        response = urlopen("http://127.0.0.1:5000/live_visual")
+        response = urlopen(SERVER_ADR + "/live_visual")
 
         image = np.fromstring(response.read(), np.uint8)
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
@@ -132,7 +136,7 @@ class MainApp(App):
         self.window.update_Spectrogram_Image(image)
 
     def getCurrentPrediction(self, dt):
-        response = urlopen("http://127.0.0.1:5000/live_pred")
+        response = urlopen(SERVER_ADR + "/live_pred")
         prob_list = json.loads(response.read())
         # ordered by class probability if n of classes < 5, else stable position
         if len(prob_list) > 5:
@@ -153,4 +157,4 @@ class MainApp(App):
         predictorId = [elem['id'] for elem in self.window.pred_list if elem['displayname'] == self.predictor][0]
         settingsDict = {'isLive': 1 if self.isLive else 0, 'file': fileId, 'predictor': predictorId}
         # send new settings to backend
-        res = requests.post('http://localhost:5000/settings', json=settingsDict)
+        res = requests.post(SERVER_ADR + '/settings', json=settingsDict)

@@ -44,6 +44,11 @@ model = AudioTaggerManager(visualisationProvider, predictionProvider, predictorL
 app = Flask(__name__)
 
 
+@app.route('/')
+def index():
+    return '<h1>Welcome to Audio Tagger!</h1>'
+
+
 @app.route('/live_visual', methods=['GET'])
 def live_visual():
     """Http GET interface method to request most current audio visualisation
