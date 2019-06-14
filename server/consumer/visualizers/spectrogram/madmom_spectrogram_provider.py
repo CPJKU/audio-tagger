@@ -14,14 +14,17 @@ that a new spectrogram is available.
 import numpy as np
 
 from threading import Thread, Event
-
+from scipy import sparse
 from madmom.audio.signal import SignalProcessor, FramedSignalProcessor
-from madmom.audio.spectrogram import SpectrogramProcessor, LogarithmicFilteredSpectrogramProcessor
-from madmom.audio.filters import LogFilterbank
+from madmom.audio.spectrogram import SpectrogramProcessor, LogarithmicFilterbank
 from madmom.processors import SequentialProcessor
 
-from server.config.config import BUFFER_SIZE
+from server.config.config import BUFFER_SIZE, SAMPLE_RATE
 from server.consumer.visualizers.visualisation_contract import VisualisationContract
+
+
+def fft_frequencies(num_fft_bins, sample_rate):
+    return np.fft.fftfreq(num_fft_bins * 2, 1. / sample_rate)[:num_fft_bins]
 
 
 class VisualisationThread(Thread):
@@ -120,12 +123,7 @@ class MadmomSpectrogramProvider(VisualisationContract):
        compute a spectrogram based on the most current audio chunk.
     """
 
-    # madmom pipeline for spectrogram calculation
-    sig_proc = SignalProcessor(num_channels=1, sample_rate=32000, norm=True)
-    fsig_proc = FramedSignalProcessor(frame_size=1024, hop_size=128, origin='future')
-    spec_proc = SpectrogramProcessor(frame_size=1024)
-    filt_proc = LogarithmicFilteredSpectrogramProcessor(filterbank=LogFilterbank, num_bands=26, fmin=20, fmax=14000)
-    processorPipeline = SequentialProcessor([sig_proc, fsig_proc, spec_proc, filt_proc])
+
 
     def __init__(self):
         """
@@ -137,9 +135,30 @@ class MadmomSpectrogramProvider(VisualisationContract):
            variable to keep track of the last processed audio chunk
         """
 
+        # madmom pipeline for spectrogram calculation
+        sig_proc = SignalProcessor(num_channels=1, sample_rate=32000, norm=True)
+        fsig_proc = FramedSignalProcessor(frame_size=1024, hop_size=1024, origin='future')
+        spec_proc = SpectrogramProcessor(frame_size=1024)
+        self.processorPipeline = SequentialProcessor([sig_proc, fsig_proc, spec_proc])
+
         # sliding window as cache
         self.sliding_window = np.zeros((128, 256), dtype=np.float32)
         self.lastProceededGroundTruth = None
+
+        self.dense_filterbank = np.array(LogarithmicFilterbank(
+            fft_frequencies(512, SAMPLE_RATE),
+            num_bands=26,
+            fmin=20,
+            fmax=14000,
+            fref=440,
+            norm_filters=True,
+            unique_filters=True,
+            bands_per_octave=True
+        ))
+
+        # csr, csc are approximately equally fast here
+        # self.sparse_filterbank = sparse.csc_matrix(dense_filterbank)
+        self.sparse_filterbank = sparse.csr_matrix(self.dense_filterbank)
 
     def start(self):
         """Start all sub tasks necessary for continuous spectrograms.
@@ -170,9 +189,15 @@ class MadmomSpectrogramProvider(VisualisationContract):
         # if thread faster than producer, do not consume same chunk multiple times
         t = self.manager.tGroundTruth
         if t != self.lastProceededGroundTruth:
+
+
+            # print('hallo', time.time())
             frame = self.manager.sharedMemory[(t - 1) % BUFFER_SIZE]   # modulo avoids index under/overflow
             frame = np.fromstring(frame, np.int16)
             spectrogram = self.processorPipeline.process(frame)
+
+            spectrogram = sparse.csr_matrix.dot(spectrogram, self.sparse_filterbank)
+            spectrogram = np.log10(spectrogram + 1)
 
             frame = spectrogram[0]
             if np.any(np.isnan(frame)):
@@ -181,6 +206,7 @@ class MadmomSpectrogramProvider(VisualisationContract):
             # update sliding window
             self.sliding_window[:, 0:-1] = self.sliding_window[:, 1::]
             self.sliding_window[:, -1] = frame
+
 
             self.lastProceededGroundTruth = t
 

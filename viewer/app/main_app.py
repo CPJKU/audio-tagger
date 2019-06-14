@@ -132,6 +132,8 @@ class MainApp(App):
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
         image = cv2.flip(image, 0)
 
+        # image = cv2.resize(image, (image.shape[1]*3, image.shape[0]*3))
+
         # send new spectrogram to UI thread
         self.window.update_Spectrogram_Image(image)
 

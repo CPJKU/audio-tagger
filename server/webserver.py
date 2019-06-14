@@ -43,6 +43,10 @@ model = AudioTaggerManager(visualisationProvider, predictionProvider, predictorL
 # audio tagger REST API functions
 app = Flask(__name__)
 
+# import logging
+# log = logging.getLogger('werkzeug')
+# log.setLevel(logging.ERROR)
+
 
 @app.route('/')
 def index():
@@ -230,12 +234,12 @@ def send_new_settings():
 # Helper functions
 def convertSpecToJPG(spec):
     spec = spec / 3.0
-    resz_spec = 3
-    spec = cv2.resize(spec, (spec.shape[1] * resz_spec, spec.shape[0] * resz_spec))
+    # resz_spec = 3
+    # spec = cv2.resize(spec, (spec.shape[1] * resz_spec, spec.shape[0] * resz_spec))
     spec = plt.cm.magma(spec)[:, :, 0:3]
     spec_bgr = (spec * 255).astype(np.uint8)
-    if spec_bgr.shape[1] < 512:
-        p = (512 - spec_bgr.shape[1]) // 2
+    if spec_bgr.shape[1] < 256:
+        p = (256 - spec_bgr.shape[1]) // 2
         spec_bgr = np.pad(spec_bgr, ((0, 0), (p, p), (0, 0)), mode="constant")
     spec_bgr = cv2.flip(spec_bgr, 0)
     _, curImage = cv2.imencode('.jpg', spec_bgr)

@@ -22,14 +22,14 @@ new predictions.
 import os
 import numpy as np
 
+from scipy import sparse
 from threading import Thread, Event
 from server.consumer.predictors.prediction_thread import PredictionThread
 from madmom.audio.signal import SignalProcessor, FramedSignalProcessor
-from madmom.audio.spectrogram import SpectrogramProcessor, LogarithmicFilteredSpectrogramProcessor
-from madmom.audio.filters import LogFilterbank
+from madmom.audio.spectrogram import SpectrogramProcessor, LogarithmicFilterbank
 from madmom.processors import SequentialProcessor
 
-from server.config.config import PROJECT_ROOT, BUFFER_SIZE
+from server.config.config import PROJECT_ROOT, BUFFER_SIZE, SAMPLE_RATE
 from server.consumer.predictors.predictor_contract import PredictorContract
 from server.consumer.predictors.dcase_predictor.baseline_model import load_dcase_model
 
@@ -40,6 +40,10 @@ DCASE_CLASSES = ["Acoustic_guitar", "Applause", "Bark", "Bass_drum", "Burping_or
                  "Gunshot_or_gunfire", "Harmonica", "Hi-hat", "Keys_jangling", "Knock", "Laughter", "Meow",
                  "Microwave_oven", "Oboe", "Saxophone", "Scissors", "Shatter", "Snare_drum", "Squeak", "Tambourine",
                  "Tearing", "Telephone", "Trumpet", "Violin_or_fiddle", "Writing"]
+
+
+def fft_frequencies(num_fft_bins, sample_rate):
+    return np.fft.fftfreq(num_fft_bins * 2, 1. / sample_rate)[:num_fft_bins]
 
 
 class SlidingWindowThread(Thread):
@@ -169,12 +173,24 @@ class DcasePredictor(PredictorContract):
         sig_proc = SignalProcessor(num_channels=1, sample_rate=32000, norm=True)
         fsig_proc = FramedSignalProcessor(frame_size=1024, hop_size=128, origin='future')
         spec_proc = SpectrogramProcessor(frame_size=1024)
-        filt_proc = LogarithmicFilteredSpectrogramProcessor(filterbank=LogFilterbank, num_bands=26, fmin=20, fmax=14000)
 
-        self.processor = SequentialProcessor([sig_proc, fsig_proc, spec_proc, filt_proc])
+        self.processor = SequentialProcessor([sig_proc, fsig_proc, spec_proc])
 
         self.slidingWindowThread = None
         self.predictionThread = None
+
+        self.dense_filterbank = np.array(LogarithmicFilterbank(
+            fft_frequencies(512, SAMPLE_RATE),
+            num_bands=26,
+            fmin=20,
+            fmax=14000,
+            fref=440,
+            norm_filters=True,
+            unique_filters=True,
+            bands_per_octave=True
+        ))
+
+        self.sparse_filterbank = sparse.csr_matrix(self.dense_filterbank)
 
     def start(self):
         """Start all sub tasks necessary for continuous prediction.
@@ -209,6 +225,9 @@ class DcasePredictor(PredictorContract):
             spectrogram = self.processor.process(frame)
 
             frame = spectrogram[0]
+
+            frame = sparse.csr_matrix.dot(frame, self.sparse_filterbank)
+            frame = np.log10(frame + 1)
             if np.any(np.isnan(frame)):
                 frame = np.zeros_like(frame, dtype=np.float32)
 
