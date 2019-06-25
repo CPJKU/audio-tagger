@@ -21,6 +21,7 @@ new predictions.
 """
 import os
 import numpy as np
+import torch
 
 from scipy import sparse
 from threading import Thread, Event
@@ -209,6 +210,11 @@ class DcasePredictor(PredictorContract):
             self.predictionThread.join()
         except:
             print("Join call on a non existing thread is ignored...")
+
+        del self.model
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     def compute_spectrogram(self):
         """This methods first access the global time variable ``tGroundTruth``

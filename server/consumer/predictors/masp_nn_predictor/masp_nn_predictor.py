@@ -1,6 +1,7 @@
 
 import os
 import numpy as np
+import torch
 
 from server.consumer.predictors.masp_nn_predictor.masp_nn_model import load_masp_nn_model
 from server.consumer.predictors.predictor_contract import PredictorContract
@@ -62,6 +63,11 @@ class MASPNNPredictor(PredictorContract):
             self.predThread.join()
         except:
             print("Join call on a non existing thread is ignored...")
+
+        del self.model
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     def predict(self):
 

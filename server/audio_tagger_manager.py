@@ -376,7 +376,6 @@ class AudioTaggerManager:
         """
 
         # stop producer and consumers
-
         try:
             self.producerThread.join()
         except:
@@ -404,7 +403,6 @@ class AudioTaggerManager:
                 self.producerThread = AudiofileThread(self, filePath)
             else:
                 self.producerThread = None
-
 
         # load selected prediction class via reflection, update references for the new predictor object
         predictorClassPath = [elem['predictorClassPath'] for elem in self.getPredList() if elem['id'] == predictor][0]

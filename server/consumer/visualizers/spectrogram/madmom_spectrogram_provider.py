@@ -123,8 +123,6 @@ class MadmomSpectrogramProvider(VisualisationContract):
        compute a spectrogram based on the most current audio chunk.
     """
 
-
-
     def __init__(self):
         """
         Parameters
