@@ -18,7 +18,7 @@ from kivy.properties import ListProperty, StringProperty
 from viewer.utils.utils import getScreenResolution
 
 
-SERVER_ADR = 'http://127.0.0.1:80'
+SERVER_ADR = 'http://127.0.0.1:5000'
 UPDATE_RATE = 0.01
 
 
